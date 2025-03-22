@@ -16,7 +16,7 @@
 
 // Definição de pixel GRB
 struct pixel_t {
-  uint8_t G, R, B; // Três valores de 8-bits compõem um pixel.
+  uint8_t G, R, B; // Três valores de 8-bits compõem um pixel (Verde, Vermelho, Azul).
 };
 typedef struct pixel_t pixel_t;
 typedef pixel_t npLED_t; // Mudança de nome de "struct pixel_t" para "npLED_t" por clareza.
@@ -31,9 +31,9 @@ uint sm;
 // Biblioteca gerada pelo arquivo .pio durante compilação.
 #include "ws2818b.pio.h"
 
-/**
- * Inicializa a máquina PIO para controle da matriz de LEDs.
- */
+
+// Inicializa a máquina PIO para controle da matriz de LEDs.
+
 void npInit(uint pin) {
   // Cria programa PIO.
   uint offset = pio_add_program(pio0, &ws2818b_program);
@@ -57,26 +57,24 @@ void npInit(uint pin) {
   }
 }
 
-/**
- * Atribui uma cor RGB a um LED.
- */
+
+// Atribui uma cor RGB a um LED.
 void npSetLED(const uint index, const uint8_t r, const uint8_t g, const uint8_t b) {
   leds[index].R = r;
   leds[index].G = g;
   leds[index].B = b;
 }
 
-/**
- * Limpa o buffer de pixels.
- */
+
+// Limpa o buffer de pixels (desliga todos os LEDs).
 void npClear() {
   for (uint i = 0; i < LED_COUNT; ++i)
     npSetLED(i, 0, 0, 0);
 }
 
-/**
- * Escreve os dados do buffer nos LEDs.
- */
+
+// Escreve os dados do buffer nos LEDs.
+// Envia os dados RGB para a máquina PIO.
 void npWrite() {
   // Escreve cada dado de 8-bits dos pixels em sequência no buffer da máquina PIO.
   for (uint i = 0; i < LED_COUNT; ++i) {
@@ -88,6 +86,7 @@ void npWrite() {
 }
 
 // Definição de uma função para inicializar o PWM no pino do buzzer
+// Configura a frequência e o ciclo de trabalho.
 void pwm_init_buzzer(uint pin) {
     // Configurar o pino como saída de PWM
     gpio_set_function(pin, GPIO_FUNC_PWM);
@@ -100,9 +99,10 @@ void pwm_init_buzzer(uint pin) {
     pwm_config_set_clkdiv(&config, clock_get_hz(clk_sys) / (BUZZER_FREQUENCY * 4096)); // Divisor de clock
     pwm_init(slice_num, &config, true);
 
-    // Iniciar o PWM no nível baixo
+    // Iniciar o PWM no nível baixo (inicialmente o buzzer está desligado)
     pwm_set_gpio_level(pin, 0);
 }
+// Calcula o índice de um LED na matriz de 5x5, levando em consideração a direção em que cada linha é percorrida (esquerda para direita ou direita para esquerda).
 
 int getIndex(int x, int y) {
     // Se a linha for par (0, 2, 4), percorremos da esquerda para a direita.
@@ -114,8 +114,9 @@ int getIndex(int x, int y) {
     }
 }
 
-// Função para exibir a matriz verde
+// Função para exibir a matriz verde (todos os LEDs acesos na cor verde).
 void mostrarMatrizVerde() {
+    // Definindo a cor verde (RGB = {0}, {255}, {0}) 
     int matriz_verde[5][5][3] = {
         {{0, 255, 0}, {0, 255, 0}, {0, 255, 0}, {0, 255, 0}, {0, 255, 0}},
         {{0, 255, 0}, {0, 255, 0}, {0, 255, 0}, {0, 255, 0}, {0, 255, 0}},
@@ -123,17 +124,19 @@ void mostrarMatrizVerde() {
         {{0, 255, 0}, {0, 255, 0}, {0, 255, 0}, {0, 255, 0}, {0, 255, 0}},
         {{0, 255, 0}, {0, 255, 0}, {0, 255, 0}, {0, 255, 0}, {0, 255, 0}}
     };
+    // Atribui a cor verde a cada LED da matriz.
     for (int linha = 0; linha < 5; linha++) {
         for (int coluna = 0; coluna < 5; coluna++) {
             int posicao = getIndex(linha, coluna);
             npSetLED(posicao, matriz_verde[coluna][linha][0], matriz_verde[coluna][linha][1], matriz_verde[coluna][linha][2]);
         }
     }
-    npWrite();
+    npWrite(); // Atualiza a cor escrevendo na matriz de LEDs.
 }
 
-// Função para exibir a matriz vermelha
+// Função para exibir a matriz vermelha (todos os LEDs acesos na cor vermelha).
 void mostrarMatrizVermelha() {
+    // Definindo a cor vermelha (RGB = {255}, {0}, {0}) 
     int matriz_vermelha[5][5][3] = {
         {{255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}},
         {{255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}},
@@ -141,16 +144,17 @@ void mostrarMatrizVermelha() {
         {{255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}},
         {{255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}, {255, 0, 0}}
     };
+    // Atribui a cor vermelha a cada LED da matriz.
     for (int linha = 0; linha < 5; linha++) {
         for (int coluna = 0; coluna < 5; coluna++) {
             int posicao = getIndex(linha, coluna);
             npSetLED(posicao, matriz_vermelha[coluna][linha][0], matriz_vermelha[coluna][linha][1], matriz_vermelha[coluna][linha][2]);
         }
     }
-    npWrite();
+    npWrite(); // Atualiza a cor escrevendo na matriz de LEDs.
 }
 
-// Definição de uma função para emitir um beep com duração especificada
+// Função para emitir um beep (gerar som no buzzer)
 void beep(uint pin) {
     // Obter o slice do PWM associado ao pino
     uint slice_num = pwm_gpio_to_slice_num(pin);
@@ -159,8 +163,9 @@ void beep(uint pin) {
     pwm_set_gpio_level(pin, 2048);
 }
 
+// Função para parar o beep (desligar o buzzer).
 void stopBeep(uint pin) {
-    // Desativar o sinal PWM (duty cycle 0)
+    // Desativar o sinal PWM (duty cycle 0, desligando o buzzer)
     pwm_set_gpio_level(pin, 0);
 }
 
@@ -174,6 +179,7 @@ int main() {
     gpio_set_dir(BUTTON_A_PIN, GPIO_IN);
     gpio_pull_up(BUTTON_A_PIN);
 
+    // Configuração do GPIO para o botão B como entrada com pull-up.
     const uint BUTTON_B_PIN = 6;  // Pino do botão B
     gpio_init(BUTTON_B_PIN);
     gpio_set_dir(BUTTON_B_PIN, GPIO_IN);
@@ -187,9 +193,9 @@ int main() {
 
     // Inicializa matriz de LEDs NeoPixel.
     npInit(LED_PIN);
-    npClear();
-    npWrite();
-    mostrarMatrizVermelha();
+    npClear(); // Limpa os LEDs (desliga todos).
+    npWrite(); // Atualiza a matriz (todos desligados inicialmente).
+    mostrarMatrizVermelha(); // Exibe a matriz vermelha como padrão.
 
     while (true) {
         // Verifica o estado do botão A
